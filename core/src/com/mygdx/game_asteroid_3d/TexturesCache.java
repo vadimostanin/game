@@ -1,0 +1,65 @@
+package com.mygdx.game_asteroid_3d;
+
+import java.util.HashMap;
+import com.badlogic.gdx.graphics.Texture;
+
+public class TexturesCache
+{
+	static public TexturesCache mInstance = new TexturesCache();
+	
+	enum Texture_Types
+	{
+		TEXTURE_PLAYSCREEN_BACKGROUND,
+		TEXTURE_PLAYSCREEN_BACKGROUND_STAR1,
+		TEXTURE_PLAYSCREEN_BACKGROUND_STAR2,
+		TEXTURE_PLAYSCREEN_BACKGROUND_STAR3,
+		TEXTURE_PLAYSCREEN_GRAVITY_FRAME1,
+		TEXTURE_PLAYSCREEN_GRAVITY_FRAME2,
+		TEXTURE_PLAYSCREEN_GRAVITY_FRAME3,
+		TEXTURE_PLAYSCREEN_GRAVITY_FRAME4,
+		TEXTURE_PLAYSCREEN_GRAVITY_FRAME5,
+		TEXTURE_PLAYSCREEN_GRAVITY_FRAME6,
+		TEXTURE_PLAYSCREEN_GRAVITY_FRAME7,
+		TEXTURE_PLAYSCREEN_GRAVITY_FRAME8,
+		TEXTURE_PLAYSCREEN_GRAVITY_FRAME9,
+		TEXTURE_PLAYSCREEN_GRAVITY_FRAME10,
+		TEXTURE_PLAYSCREEN_GRAVITY_FRAME11,
+		TEXTURE_PLAYSCREEN_GRAVITY_FRAME12,
+		TEXTURE_PLAYSCREEN_GRAVITY_FRAME13,
+		TEXTURE_PLAYSCREEN_GRAVITY_FRAME14,
+		TEXTURE_PLAYSCREEN_GRAVITY_FRAME15,
+		TEXTURE_PLAYSCREEN_GRAVITY_FRAME16,
+		TEXTURE_PLAYSCREEN_GRAVITY_FRAME17,
+		TEXTURE_PLAYSCREEN_GRAVITY_FRAME18,
+		TEXTURE_PLAYSCREEN_GRAVITY_FRAME19,
+		TEXTURE_PLAYSCREEN_GRAVITY_FRAME20,
+		TEXTURE_PLAYSCREEN_SHIP,
+		TEXTURE_MENUSCREEN_BACKGROUND,
+		TEXTURE_PLAYSCREEN_METEORITE1,
+	}
+	
+	private HashMap<Texture_Types, Texture> mCache = new HashMap<Texture_Types, Texture>();
+	
+	static public TexturesCache getInstance()
+	{
+		return mInstance;
+	}
+	
+	public void add( Texture_Types type, Texture texture )
+	{
+		synchronized (this)
+		{
+			mCache.put( type, texture );
+		}
+	}
+	
+	public Texture get( Texture_Types type )
+	{
+		Texture result = null;
+		synchronized (this)
+		{
+			result = mCache.get( type );
+		}
+		return result;
+	}	
+}

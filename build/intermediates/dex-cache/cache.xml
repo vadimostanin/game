@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        jar="/home/vostanin/.gradle/caches/modules-2/files-2.1/com.badlogicgames.gdx/gdx-backend-android/1.9.2/342b830bc718dc1965c8f13fc58dc500e8bd262f/gdx-backend-android-1.9.2.jar"
+        jumboMode="false"
+        revision="23.0.2"
+        sha1="342b830bc718dc1965c8f13fc58dc500e8bd262f">
+        <dex dex="/home/vostanin/AndroidStudioProjects/MyGdxGame_Asteroid_3D/android/build/intermediates/pre-dexed/debug/gdx-backend-android-1.9.2_634a1d3f709728cfd6fc857771eb42667ec30761.jar" />
+    </item>
+    <item
+        jar="/home/vostanin/.gradle/caches/modules-2/files-2.1/com.badlogicgames.gdx/gdx-bullet/1.9.2/75f6b51bec18a82a893bb5ae4359fecd9cc7d6f4/gdx-bullet-1.9.2.jar"
+        jumboMode="false"
+        revision="23.0.2"
+        sha1="75f6b51bec18a82a893bb5ae4359fecd9cc7d6f4">
+        <dex dex="/home/vostanin/AndroidStudioProjects/MyGdxGame_Asteroid_3D/android/build/intermediates/pre-dexed/debug/gdx-bullet-1.9.2_af8453c44c4fb2aeaa963c8382b17f48b24f53a3.jar" />
+    </item>
+    <item
+        jar="/home/vostanin/.gradle/caches/modules-2/files-2.1/com.badlogicgames.box2dlights/box2dlights/1.4/3d77ad5b4164fb32fc67e2446e35911bb0aaf0bd/box2dlights-1.4.jar"
+        jumboMode="false"
+        revision="23.0.2"
+        sha1="3d77ad5b4164fb32fc67e2446e35911bb0aaf0bd">
+        <dex dex="/home/vostanin/AndroidStudioProjects/MyGdxGame_Asteroid_3D/android/build/intermediates/pre-dexed/debug/box2dlights-1.4_c48e04d80e53706c000d8ff011a2de2121832f78.jar" />
+    </item>
+    <item
+        jar="/home/vostanin/.gradle/caches/modules-2/files-2.1/com.badlogicgames.gdx/gdx-box2d/1.9.2/b78eaa90aaaf7830e6dffff587ea6e859c2787b2/gdx-box2d-1.9.2.jar"
+        jumboMode="false"
+        revision="23.0.2"
+        sha1="b78eaa90aaaf7830e6dffff587ea6e859c2787b2">
+        <dex dex="/home/vostanin/AndroidStudioProjects/MyGdxGame_Asteroid_3D/android/build/intermediates/pre-dexed/debug/gdx-box2d-1.9.2_af68643d7c2c65e5ad368b5a37d20aaa60e30552.jar" />
+    </item>
+    <item
+        jar="/home/vostanin/.gradle/caches/modules-2/files-2.1/com.badlogicgames.gdx/gdx-freetype/1.9.2/3609253d14edb1b3ca5aacff4e06989edde75be4/gdx-freetype-1.9.2.jar"
+        jumboMode="false"
+        revision="23.0.2"
+        sha1="3609253d14edb1b3ca5aacff4e06989edde75be4">
+        <dex dex="/home/vostanin/AndroidStudioProjects/MyGdxGame_Asteroid_3D/android/build/intermediates/pre-dexed/debug/gdx-freetype-1.9.2_5eeeec35e647ada6bd8c5a32ae3642c212e96691.jar" />
+    </item>
+    <item
+        jar="/home/vostanin/.gradle/caches/modules-2/files-2.1/com.badlogicgames.gdx/gdx/1.9.2/e641cb91bec06bc64d9ddf7a7d7062caceec73cd/gdx-1.9.2.jar"
+        jumboMode="false"
+        revision="23.0.2"
+        sha1="e641cb91bec06bc64d9ddf7a7d7062caceec73cd">
+        <dex dex="/home/vostanin/AndroidStudioProjects/MyGdxGame_Asteroid_3D/android/build/intermediates/pre-dexed/debug/gdx-1.9.2_fea9ef4aedc99037d5dfd924137acd2ffd81f6b2.jar" />
+    </item>
+    <item
+        jar="/home/vostanin/AndroidStudioProjects/MyGdxGame_Asteroid_3D/core/build/libs/core-1.0.jar"
+        jumboMode="false"
+        revision="23.0.2"
+        sha1="963227fe824cab84de3b6accc9ec6e3d83500436">
+        <dex dex="/home/vostanin/AndroidStudioProjects/MyGdxGame_Asteroid_3D/android/build/intermediates/pre-dexed/debug/core-1.0_66cdfd97586ca5be3ab5a0138ca81a788ff62896.jar" />
+    </item>
+
+</items>

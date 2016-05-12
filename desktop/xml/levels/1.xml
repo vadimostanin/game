@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+
+<level>
+	<barriers>
+		<barrier>
+			<position x="30" y="20" />
+			<position x="70" y="70" />
+		</barrier>
+	<barriers/>
+</level>

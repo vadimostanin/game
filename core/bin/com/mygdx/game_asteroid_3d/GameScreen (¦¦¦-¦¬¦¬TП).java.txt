@@ -1,0 +1,514 @@
+package com.mygdx.game_asteroid_3d;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.Camera;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.PerspectiveCamera;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g3d.utils.CameraInputController;
+import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.physics.box2d.Body;
+import com.badlogic.gdx.physics.box2d.BodyDef;
+import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
+import com.badlogic.gdx.physics.box2d.ChainShape;
+import com.badlogic.gdx.physics.box2d.CircleShape;
+import com.badlogic.gdx.physics.box2d.Fixture;
+import com.badlogic.gdx.physics.box2d.FixtureDef;
+import com.badlogic.gdx.physics.box2d.MassData;
+import com.badlogic.gdx.physics.box2d.QueryCallback;
+import com.badlogic.gdx.physics.box2d.joints.MouseJoint;
+import com.badlogic.gdx.physics.box2d.joints.MouseJointDef;
+import com.badlogic.gdx.utils.Timer;
+import com.mygdx.game_asteroid_3d.level.Barrier;
+import com.mygdx.game_asteroid_3d.level.Level;
+import com.mygdx.game_asteroid_3d.level.LevelGravityObject;
+
+public class GameScreen implements Screen, InputProcessor
+{
+	private final static int MAX_FPS = 30;
+	private final static int MIN_FPS = 15;
+	public final static float TIME_STEP = 1f / MAX_FPS;
+	private final static float MAX_STEPS = 1f + MAX_FPS / MIN_FPS;
+	private final static float MAX_TIME_PER_FRAME = TIME_STEP * MAX_STEPS;
+	private final static int VELOCITY_ITERS = 6;
+	private final static int POSITION_ITERS = 2;
+
+	float physicsTimeLeft;
+	long aika;
+	int times;
+
+	static public Camera mCamera;
+	private SpriteBatch mBallSprite;
+	private int mViewPortWidth = Gdx.graphics.getWidth();
+	private int mViewPortHeight = Gdx.graphics.getHeight();
+
+	private List<GravityBody> mGravityBodies = new ArrayList<GravityBody>();
+	private List<IDraw> mDrawingBodies = new ArrayList<IDraw>();
+	private List<GameActiveObject> mBallBodies = new ArrayList<GameActiveObject>();
+	private ArrayList<Body> mWallCellBodies = new ArrayList<Body>();
+//	private ArrayList<Vector2[]> mGravityBodyPlaces = new ArrayList<Vector2[]>();
+	private GameWorld mGameWorld;
+	private CameraInputController mCameraInput;
+	public InputMultiplexer mInputProcessor;
+	private IGameUserActivity mUserActivity;
+
+	private int BALLSNUM = 1;
+	static ScreenProportionsConvertor mScreenProportionalConvertor;
+
+	/** a hit body **/
+	Body mHitBody = null;
+	/** our mouse joint **/
+	MouseJoint mMouseJoint = null;
+
+	Box2DDebugRenderer mDebugRenderer = new Box2DDebugRenderer( true, true, true, true, true, true );
+	
+	Level mLevel;
+
+	public GameScreen( Level level )
+	{
+		mLevel = level;
+
+		mScreenProportionalConvertor = new ScreenProportionsConvertor( mViewPortWidth, mViewPortHeight );
+		MathUtils.random.setSeed(Long.MIN_VALUE);
+
+		 mCamera = new OrthographicCamera( mViewPortWidth / 10, mViewPortHeight / 10 );
+//		mCamera = new PerspectiveCamera(40f, 48, 32);
+		mCamera.update();
+		mCamera.position.set( 0, 0, 440);
+		mCamera.lookAt( 0, 0, 0);
+		mCamera.near = 1f;
+		mCamera.far = 2000f;
+		mCamera.update();
+
+		mBallSprite = new SpriteBatch();
+		mCameraInput = new CameraInputController( mCamera );
+		
+
+		mDrawingBodies.add( new GameBoardDraw( Gdx.graphics.getWidth(), Gdx.graphics.getHeight() ) );
+//		mDrawingBodies.add( new GameBackgroundDraw( Gdx.graphics.getWidth(), Gdx.graphics.getHeight() ) );
+		
+		mInputProcessor = new InputMultiplexer();
+		Gdx.input.setInputProcessor( mInputProcessor );
+		mInputProcessor.addProcessor( this );
+//		mInputProcessor.addProcessor( mCameraInput );
+	}
+	
+	private void constructWallShape()
+	{	
+		for( Barrier barrier : mLevel.mBariers.mBarriers )
+		{
+			Vector2[] cell = new Vector2[ barrier.BarrierShape.size() ];
+			barrier.BarrierShape.toArray( cell );
+			cell = GameScreen.mScreenProportionalConvertor.convert( cell );
+			{
+				ChainShape chainShape = new ChainShape();
+				chainShape.createLoop( cell );
+				BodyDef chainBodyDef = new BodyDef();
+				chainBodyDef.type = BodyDef.BodyType.StaticBody;
+				Body cellBody = mGameWorld.getWorld().createBody( chainBodyDef );
+				cellBody.createFixture( chainShape, 0 );
+				mWallCellBodies.add( cellBody );
+//				mDrawingBodies.add( new WallDraw( cellBody ) );
+				chainShape.dispose();
+			}
+		}		
+	}
+//
+//	private void constructWallShape2()
+//	{
+//		{
+//			int wallHeight = 20;
+//			ConstrainsTableLayout cellsTable = new ConstrainsTableLayout( 
+//					(int)GameScreen.mScreenProportionalConvertor.convertX( 0 ),
+//					(int)GameScreen.mScreenProportionalConvertor.convertY( mViewPortHeight / 2 - wallHeight ), 
+//					(int)GameScreen.mScreenProportionalConvertor.convertX( mViewPortWidth / 2 ), 
+//					(int)GameScreen.mScreenProportionalConvertor.convertY( wallHeight ), 
+//					3, 
+//					(int)GameScreen.mScreenProportionalConvertor.convertX( 20 ) );
+//			List<Vector2[]> cellLayouts = cellsTable.getHorizontalCellRects();
+//
+//			for( Vector2[] cell : cellLayouts )
+//			{
+//				ChainShape chainShape = new ChainShape();
+//				chainShape.createLoop( cell );
+//				BodyDef chainBodyDef = new BodyDef();
+//				chainBodyDef.type = BodyDef.BodyType.StaticBody;
+//				Body cellBody = mGameWorld.getWorld().createBody( chainBodyDef );
+//				cellBody.createFixture( chainShape, 0 );
+//				mWallCellBodies.add( cellBody );
+//				mDrawingBodies.add( new WallDraw( cellBody ) );
+//				chainShape.dispose();
+//			}
+//			cellLayouts = cellsTable.getHorizontalPaddingRects();
+//			mGravityBodyPlaces.addAll( cellLayouts );
+//		}
+//		{
+//			ConstrainsTableLayout cellsTable = new ConstrainsTableLayout((int) ( (-1) * mViewPortWidth / 2 + 150.0f ),
+//					-mViewPortHeight / 2, 500, 20, 3, 20);
+//			List<Vector2[]> cellLayouts = cellsTable.getHorizontalCellRects();
+//
+//			for (Vector2[] cell : cellLayouts) {
+//				ChainShape chainShape = new ChainShape();
+//				chainShape.createLoop(cell);
+//				BodyDef chainBodyDef = new BodyDef();
+//				chainBodyDef.type = BodyDef.BodyType.StaticBody;
+//				Body cellBody = mGameWorld.getWorld().createBody(chainBodyDef);
+//				cellBody.createFixture(chainShape, 0);
+//				mWallCellBodies.add(cellBody);
+//				mDrawingBodies.add(new WallDraw(cellBody));
+//				chainShape.dispose();
+//			}
+//			cellLayouts = cellsTable.getHorizontalPaddingRects();
+//			mGravityBodyPlaces.addAll(cellLayouts);
+//		}
+//	}
+
+	private void createPlayer()
+	{
+		CircleShape ballShape = new CircleShape();
+		ballShape.setRadius( GameScreen.mScreenProportionalConvertor.proportionalYscale( 1.0f ) );
+
+		FixtureDef def = new FixtureDef();
+		def.restitution = 0.9f;
+		def.friction = 0.1f;
+		def.shape = ballShape;
+		def.density = 1f;
+		BodyDef boxBodyDef = new BodyDef();
+		boxBodyDef.type = BodyDef.BodyType.DynamicBody;
+
+		for( int i = 0; i < BALLSNUM; i++ )
+		{
+			// Create the BodyDef, set a random position above the
+			// ground and create a new body
+			boxBodyDef.position.x = mLevel.mActiveObject.Position.x;
+			boxBodyDef.position.y = mLevel.mActiveObject.Position.y;
+			boxBodyDef.fixedRotation = true;
+			Body boxBody = mGameWorld.getWorld().createBody(boxBodyDef);
+			MassData massData = boxBody.getMassData();
+			massData.mass = 1.0f;
+			boxBody.setMassData(massData);
+			boxBody.createFixture(def);
+			boxBody.setUserData( "Player" );
+			mBallBodies.add( new GameActiveObject( boxBody ) );
+			mDrawingBodies.add( new GameShipDraw( boxBody ) );
+		}
+		ballShape.dispose();
+	}
+
+	private void createGravityBodies()
+	{
+		CircleShape ballShape = new CircleShape();
+		ballShape.setRadius( GameScreen.mScreenProportionalConvertor.proportionalYscale( 1.0f ) );
+
+		FixtureDef def = new FixtureDef();
+		def.restitution = 0.9f;
+		def.friction = 0.1f;
+		def.shape = ballShape;
+		def.density = 1f;
+		BodyDef boxBodyDef = new BodyDef();
+		boxBodyDef.type = BodyDef.BodyType.StaticBody;
+
+		for( LevelGravityObject levelGravityObject : mLevel.mGravityObjects.mGravityObjects )
+		{
+			// Create the BodyDef, set a random position above the
+			// ground and create a new body
+			Vector2 converted = new Vector2( levelGravityObject.mPosition.x, boxBodyDef.position.y = levelGravityObject.mPosition.y );
+			GameScreen.mScreenProportionalConvertor.proportionalMove( converted );
+			boxBodyDef.position.x = converted.x;
+			boxBodyDef.position.y = converted.y;
+			Body boxBody = mGameWorld.getWorld().createBody(boxBodyDef);
+			MassData massData = boxBody.getMassData();
+			massData.mass = 1.0f;
+			boxBody.setMassData(massData);
+			boxBody.createFixture(def);
+			
+			GravityBody gravBody = new GravityBody(boxBody);
+			
+			boxBody.setUserData( gravBody );
+			// mGravityBodies.add( boxBody );
+			
+			mGravityBodies.add( gravBody );
+//			mDrawingBodies.add( new GravityBodyDraw( gravBody ) );
+		}
+		ballShape.dispose();
+	}
+
+	private void createGoalStaticBody()
+	{
+		CircleShape ballShape = new CircleShape();
+		ballShape.setRadius(15);
+
+		FixtureDef def = new FixtureDef();
+		def.restitution = 0.9f;
+		def.friction = 0.1f;
+		def.shape = ballShape;
+		def.density = 10.0f;
+		BodyDef boxBodyDef = new BodyDef();
+		boxBodyDef.type = BodyDef.BodyType.StaticBody;
+
+		// Create the BodyDef, set a random position above the
+		// ground and create a new body
+		boxBodyDef.position.x = mLevel.mGoal.Position.x;
+		boxBodyDef.position.y = mLevel.mGoal.Position.y;
+		Body body = mGameWorld.getWorld().createBody(boxBodyDef);
+		body.createFixture(def);
+
+//		mGravityBodies.add( new GravityBody( body ) );
+//		mDrawingBodies.add( new GoalDraw( body ) );
+
+		ballShape.dispose();
+	}
+
+	private void applyBallForce()
+	{
+		for( GameActiveObject influencedBody : mBallBodies )
+		{
+			for( GravityBody gravBody : mGravityBodies )
+			{
+				Vector2 force = gravBody.getGravityForce2( influencedBody.getBody() );
+				influencedBody.getBody().applyForce( force, influencedBody.getBody().getWorldCenter(), true );
+			}
+		}
+	}
+
+	private void renderObjects(float deltaTime)
+	{
+		for( IDraw drawObj : mDrawingBodies )
+		{
+			drawObj.draw(mBallSprite, deltaTime);
+		}
+	}
+
+	@Override
+	public void show()
+	{
+		// Gdx.input.setInputProcessor((InputProcessor) this);
+		mGameWorld = new GameWorld(mViewPortWidth, mViewPortHeight, true);
+		constructWallShape();
+		createPlayer();
+		createGoalStaticBody();
+		createGravityBodies();
+	}
+
+	@Override
+	public void render(float delta) {
+		// TODO Auto-generated method stub
+		Gdx.gl.glClearColor(0, 1, 1, 1);
+		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+		Gdx.gl.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+		mCamera.update();
+		fixedStep(Gdx.graphics.getDeltaTime());
+
+		renderObjects(delta);
+
+		mDebugRenderer.render(mGameWorld.getWorld(), mCamera.combined);
+
+		applyBallForce();
+	}
+
+	private boolean fixedStep(float delta)
+	{
+		physicsTimeLeft += delta;
+		if (physicsTimeLeft > MAX_TIME_PER_FRAME)
+			physicsTimeLeft = MAX_TIME_PER_FRAME;
+
+		boolean stepped = false;
+		while (physicsTimeLeft >= TIME_STEP) {
+			mGameWorld.getWorld().step(TIME_STEP, VELOCITY_ITERS, POSITION_ITERS);
+			physicsTimeLeft -= TIME_STEP;
+			stepped = true;
+		}
+		return stepped;
+	}
+
+	@Override
+	public void resize(int width, int height) {
+		// TODO Auto-generated method stub
+
+		// mViewPortWidth = width;
+		// mViewPortHeight = height;
+		//
+		// mCamera.setToOrtho( true, mViewPortWidth, mViewPortHeight );
+		// mCamera.position.set( 0, mViewPortHeight / 2f, 0);
+		// mCamera.update();
+
+	}
+
+	@Override
+	public void pause() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void resume() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void hide() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void dispose() {
+		mGameWorld.dispose();
+	}
+
+	@Override
+	public boolean keyDown(int keycode) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean keyUp(int keycode) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean keyTyped(char character) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	/**
+	 * we instantiate this vector and the callback here so we don't irritate the
+	 * GC
+	 **/
+	Vector2 testPoint = new Vector2();
+	QueryCallback callback = new QueryCallback()
+	{
+		@Override
+		public boolean reportFixture(Fixture fixture)
+		{
+			if ( fixture.getBody().getUserData() != null && ( fixture.getBody().getUserData() instanceof String ) &&  ((String)fixture.getBody().getUserData()).equalsIgnoreCase( "Player" ) )
+			{
+				//fixture.testPoint(testPoint.x, testPoint.y) && 
+				mHitBody = fixture.getBody();
+				return false;
+			}
+			else
+				return true;
+		}
+	};
+
+	@Override
+	public boolean touchDown(int screenX, int screenY, int pointer, int button)
+	{
+		// TODO Auto-generated method stub
+		// mBallX = screenX - mViewPortWidth / 2;
+		// mBallY = screenY;
+
+		int normScreenX = ( screenX - mViewPortWidth / 2 ) / 10;
+		int normScreenY = ( mViewPortHeight / 2 - screenY ) / 10;
+		
+		// translate the mouse coordinates to world coordinates
+		testPoint.set( normScreenX, normScreenY );
+//		Vector3 unProjected = mCamera.unproject(testPoint);
+
+		// ask the world which bodies are within the given
+		// bounding box around the mouse pointer
+		mHitBody = null;
+		
+		mGameWorld.getWorld().QueryAABB( callback, normScreenX - 200, normScreenY - 200, normScreenX + 200, normScreenY + 200 );
+
+		// if we hit something we create a new mouse joint
+		// and attach it to the hit body.
+		if (mHitBody == null)
+		{
+			return false;
+		}
+		
+		if( mHitBody.getUserData() instanceof GravityBody )
+		{
+			GravityBody gravBody = ( GravityBody ) mHitBody.getUserData();
+			Box2dGravitySlider gravSlider = new Box2dGravitySlider( gravBody, testPoint );
+			mInputProcessor.addProcessor( gravSlider.getInputProcessor() );
+			mUserActivity = gravSlider;
+			mDrawingBodies.add( gravSlider );
+		}
+		else
+		{		
+			MouseJointDef def = new MouseJointDef();
+			def.bodyA = mGameWorld.getGroundBody();
+			def.bodyB = mHitBody;			
+			def.collideConnected = true;
+			def.target.set(testPoint.x, testPoint.y);
+			def.maxForce = 10000.0f * mHitBody.getMass();
+	
+			mMouseJoint = (MouseJoint) mGameWorld.getWorld().createJoint(def);
+			mHitBody.setAwake( true );
+		}
+
+		return true;
+	}
+
+	@Override
+	public boolean touchUp(int screenX, int screenY, int pointer, int button)
+	{
+		if( null != mUserActivity )
+		{
+			//due to we are in InputMultiplexer.touchUp function, I cannot remove InputProcessor here
+			new Timer().scheduleTask( new InputProcessorRealeaseTask( mInputProcessor, mUserActivity.getInputProcessor() ), 0.5f );
+			mUserActivity.dispose();
+			mUserActivity = null;
+		}
+		// if a mouse joint exists we simply destroy it
+		if (mMouseJoint != null)
+		{
+			mGameWorld.getWorld().destroyJoint(mMouseJoint);
+			mMouseJoint = null;
+		}
+		return false;
+	}
+
+	/** another temporary vector **/
+	Vector2 target = new Vector2();
+
+	@Override
+	public boolean touchDragged(int screenX, int screenY, int pointer)
+	{
+		int normScreenX = ( screenX - mViewPortWidth / 2 ) / 10;
+		int normScreenY = ( mViewPortHeight / 2 - screenY ) / 10;
+		
+		testPoint.set( normScreenX, normScreenY );
+//		Vector3 unProjected = mCamera.unproject( testPoint );
+		target.set(testPoint.x, testPoint.y);
+		// if a mouse joint exists we simply update
+		// the target of the joint based on the new
+		// mouse coordinates
+		if (mMouseJoint != null) {
+			mMouseJoint.setTarget(target);
+		}
+		return false;
+	}
+
+	@Override
+	public boolean mouseMoved(int screenX, int screenY) {
+		// TODO Auto-generated method stub
+		// mBallX = screenX - mViewPortWidth / 2;
+		// mBallY = screenY;
+		return false;
+	}
+
+	@Override
+	public boolean scrolled(int amount) {
+		mCamera.rotate((float) amount * 3f, 0, 0, 1);
+		return false;
+	}
+
+}
