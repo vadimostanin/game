@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.utils.TiledDrawable;
 import com.mygdx.game_asteroid_3d.TexturesCache.Texture_Types;
@@ -47,6 +48,7 @@ public class TextureRandomDistribution implements IDraw, IPropertyChangeListener
 	private boolean mShaking = false;
 	private boolean mMoving = true;
 	private boolean mRepeat = true;
+	private Matrix4 mTranformation = new Matrix4();
 	
 	TextureRandomDistribution( Texture texture, int x, int y, int width, int height, float slowMotion, int rareRatio, float initRatio, boolean repeat )
 	{
@@ -73,6 +75,8 @@ public class TextureRandomDistribution implements IDraw, IPropertyChangeListener
 //        mTexture.setWrap( TextureWrap.Repeat, TextureWrap.Repeat );
 
 		mBatch = new SpriteBatch();
+		
+		mTranformation.setToOrtho2D( 0, 0, width, height );
 
 		initRotationsScaleOffsets();
 	}
@@ -158,6 +162,8 @@ public class TextureRandomDistribution implements IDraw, IPropertyChangeListener
 	@Override
 	public void draw(Batch batch, float deltaTime)
 	{
+//		mBatch.setProjectionMatrix( batch.getProjectionMatrix() );
+		mBatch.setProjectionMatrix( mTranformation );
 		mBatch.begin();
 //		mTexture.setWrap( TextureWrap.Repeat, TextureWrap.Repeat );
 		if( true == isRepeat() )
@@ -175,14 +181,14 @@ public class TextureRandomDistribution implements IDraw, IPropertyChangeListener
 			mSprite.setV2( 1 );
 		}
 		mSprite.draw( mBatch );
-		if( true == mShaking )
-		{
-			mSprite.setPosition( ( -mX - mSprite.getWidth() ) + (float)Math.random(), ( -mY - mSprite.getHeight() / 2 ) + (float)Math.random() );
-		}
-		else
-		{
-			mSprite.setPosition( ( -mX - mSprite.getWidth() ) / mSlowMotion, ( -mY - mSprite.getHeight() / 2 ) / mSlowMotion );
-		}
+//		if( true == mShaking )
+//		{
+//			mSprite.setPosition( ( -mX - mSprite.getWidth() ) + (float)Math.random(), ( -mY - mSprite.getHeight() / 2 ) + (float)Math.random() );
+//		}
+//		else
+//		{
+//			mSprite.setPosition( ( -mX - mSprite.getWidth() / 2 ), ( -mY - mSprite.getHeight() / 2 ) );
+//		}
 		
 		mBatch.end();
 	}
@@ -192,8 +198,11 @@ public class TextureRandomDistribution implements IDraw, IPropertyChangeListener
 	{
 		if( prop instanceof MoveProperty && true == isMoving() )
 		{
-			mX += ((MoveProperty)prop).getDelta().x / mSlowMotion;
-			mY += ((MoveProperty)prop).getDelta().y / mSlowMotion;
+			Vector2 delta = ((MoveProperty)prop).getDelta();
+//			mX += delta.x / mSlowMotion;
+//			mY += delta.y / mSlowMotion;
+			mTranformation.translate( ( -1 ) * delta.x / mSlowMotion, ( -1 ) * delta.y / mSlowMotion, 0 );
+			
 		}
 	}
 

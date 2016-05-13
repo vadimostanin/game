@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.Texture.TextureWrap;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
 import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g3d.Environment;
@@ -18,6 +19,7 @@ import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.utils.TiledDrawable;
 import com.mygdx.game_asteroid_3d.TexturesCache.Texture_Types;
@@ -30,6 +32,7 @@ public class GameBackgroundDraw2D implements IDraw, IPropertyChangeListener
 	private int mWidth;
 	private int mHeight;
 	private Texture mTexture;
+	private Sprite mSprite;
 	
 	SpriteBatch mBatch = new SpriteBatch();
 	
@@ -37,6 +40,7 @@ public class GameBackgroundDraw2D implements IDraw, IPropertyChangeListener
 	
 	private float mX = 0.0f;
 	private float mY = 0.0f;
+	private Matrix4 mTranformation = new Matrix4();
 
 	public GameBackgroundDraw2D( int x, int y, int width, int height )
 	{
@@ -50,6 +54,11 @@ public class GameBackgroundDraw2D implements IDraw, IPropertyChangeListener
 		mTexture = TexturesCache.getInstance().get( Texture_Types.TEXTURE_PLAYSCREEN_BACKGROUND );
 		
 //		mTexture.setWrap( TextureWrap.Repeat, TextureWrap.Repeat );
+		
+		mTranformation.setToOrtho2D( -width, -height, width *2, height*2 );
+		mBatch.setProjectionMatrix( mTranformation );
+		mSprite = new Sprite( mTexture );
+		mSprite.setPosition( 0, 0 );
 	}
 	
 	public Texture getTexture()
@@ -65,9 +74,13 @@ public class GameBackgroundDraw2D implements IDraw, IPropertyChangeListener
 //	    Gdx.gl20.glEnable(GL20.GL_TEXTURE_2D);
 //	    Gdx.gl20.glBlendEquation(GL20.GL_BLEND);
 	    
-		batch.begin();
-        batch.draw( mTexture, mX, mY, mWidth, mHeight );
-        batch.end();
+		mBatch.setProjectionMatrix( mTranformation );
+		mBatch.begin();
+		mBatch.draw( mTexture, -mWidth, -mHeight, mWidth * 2, mHeight * 2 );
+//		mBatch.getProjectionMatrix().translate( 1, 0, 0 );
+//		mTranformation.translate( 1, 0, 0 );
+//		mSprite.draw( mBatch );
+		mBatch.end();
 	}
 
 	@Override

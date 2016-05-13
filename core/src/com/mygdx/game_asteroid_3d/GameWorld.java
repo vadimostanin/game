@@ -87,6 +87,6 @@ public class GameWorld implements IPropertyChangeListener, Disposable
 	@Override
 	public void onChanged( IProperty prop )
 	{
-		mGameBounds.onChanged( prop );
+//		mGameBounds.onChanged( prop );
 	}
 }

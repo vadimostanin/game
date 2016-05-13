@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector2;
 
 import properties.IProperty;
@@ -21,8 +22,6 @@ public class WorldBoundsDraw implements IDisposablePropertyListener, IDraw
 	private Vector2[] mVertex;
 	
 	private Texture mTexture;
-	
-	private Texture mGeneratedTextures;
 	
 	private int mTextureWidth = 0;
 	private int mTextureHeight = 0;
@@ -40,6 +39,7 @@ public class WorldBoundsDraw implements IDisposablePropertyListener, IDraw
 	private float mInitRatio = 1.0f;
 
 	private boolean mInitialMoved = false;
+	private Matrix4 mTranformation = new Matrix4();
 	
 	public WorldBoundsDraw( Vector2[] vertex, Texture texture )
 	{
@@ -99,6 +99,9 @@ public class WorldBoundsDraw implements IDisposablePropertyListener, IDraw
 			
 			initPoint = mVertex[bound_i];
         }
+        
+        mTranformation.setToOrtho2D( 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight() );
+		mBatch.setProjectionMatrix( mTranformation );
 	}
 	
 	private void drawToFrameBuffer( FrameBuffer fbo, float width, int height )
@@ -173,6 +176,7 @@ public class WorldBoundsDraw implements IDisposablePropertyListener, IDraw
 	@Override
 	public void draw(Batch batch, float deltaTime)
 	{
+		mBatch.setProjectionMatrix( mTranformation );
 		mBatch.begin();
 //		mTexture.setWrap( TextureWrap.Repeat, TextureWrap.Repeat );
 		for( Sprite sprite : mSprites )
@@ -192,7 +196,8 @@ public class WorldBoundsDraw implements IDisposablePropertyListener, IDraw
 			if( true == mInitialMoved )
 			{
 				Vector2 delta = ((MoveProperty)prop).getDelta();
-				move( -delta.x, -delta.y );
+				mTranformation.translate( ( -1 ) * delta.x, ( -1 ) * delta.y, 0 );
+//				move( -delta.x, -delta.y );
 			}
 			else
 			{

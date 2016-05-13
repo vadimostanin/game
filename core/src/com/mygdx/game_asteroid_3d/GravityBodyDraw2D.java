@@ -25,6 +25,7 @@ import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.utils.Align;
@@ -33,6 +34,7 @@ import com.mygdx.game_asteroid_3d.TexturesCache.Texture_Types;
 
 import properties.GravityRadiusProperty;
 import properties.IProperty;
+import properties.MoveProperty;
 import properties.PositionProperty;
 
 public class GravityBodyDraw2D extends Actor implements IDraw, IPropertyChangeListener, Disposable
@@ -62,8 +64,9 @@ public class GravityBodyDraw2D extends Actor implements IDraw, IPropertyChangeLi
 	private Sprite mFieldSprite;
 	
 	private Vector2 mPosition = new Vector2();
+	private Matrix4 mTranformation = new Matrix4();
 	
-	GravityBodyDraw2D( float x, float y )
+	public GravityBodyDraw2D( float x, float y )
 	{
 		String storagePaths = Gdx.files.getLocalStoragePath();
 //	    ShaderProgram.pedantic = false;
@@ -94,6 +97,8 @@ public class GravityBodyDraw2D extends Actor implements IDraw, IPropertyChangeLi
 		mFieldSprite.setPosition( x + Gdx.graphics.getWidth() / 2 - allFrames[0].getWidth() / 2, y + Gdx.graphics.getHeight() / 2 - allFrames[0].getHeight() / 2 );
 		
 		mFieldSprite.setScale( mCurrentFieldRadius * 0.1f );
+		
+		mTranformation.setToOrtho2D( 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight() );
 	}
 	
 	private void initSphere()
@@ -155,6 +160,8 @@ public class GravityBodyDraw2D extends Actor implements IDraw, IPropertyChangeLi
 		
 //		mInstanceSphereField.materials.get(0).get( TextureAttribute.class, TextureAttribute.Diffuse).set( allFrames[ (int)currFrame ] );
 		currFrame -= 0.5;
+
+		mSpriteBatch.setProjectionMatrix( mTranformation );
 		
 		mSpriteBatch.begin();
 			mCenterPe.draw( mSpriteBatch, Gdx.graphics.getDeltaTime() );
@@ -202,13 +209,16 @@ public class GravityBodyDraw2D extends Actor implements IDraw, IPropertyChangeLi
 	@Override
 	public void onChanged(IProperty prop)
 	{
-		if( prop instanceof PositionProperty )
+//		if( prop instanceof PositionProperty )
+//		{
+//			mPosition.set( ((PositionProperty)prop).getPosition() );
+//			setCenterPePosition( mPosition.x + Gdx.graphics.getWidth() / 2, mPosition.y + Gdx.graphics.getHeight() / 2 );
+//			mFieldSprite.setPosition( mPosition.x + Gdx.graphics.getWidth() / 2 - allFrames[0].getWidth() / 2, mPosition.y + Gdx.graphics.getHeight() / 2 - allFrames[0].getHeight() / 2 );
+//		}
+		if( prop instanceof MoveProperty )
 		{
-			mPosition.set( ((PositionProperty)prop).getPosition() );
-			setCenterPePosition( mPosition.x + Gdx.graphics.getWidth() / 2, mPosition.y + Gdx.graphics.getHeight() / 2 );
-			mFieldSprite.setPosition( mPosition.x + Gdx.graphics.getWidth() / 2 - allFrames[0].getWidth() / 2, mPosition.y + Gdx.graphics.getHeight() / 2 - allFrames[0].getHeight() / 2 );
-//			mInstanceSphere.transform.trn( mPosition.x, mPosition.y, 20.0f );
-//			mInstanceSphereField.transform.trn( mPosition.x, mPosition.y, 20.0f );
+			Vector2 delta = ((MoveProperty)prop).getDelta();
+			mTranformation.translate( ( -1 ) * delta.x, ( -1 ) * delta.y, 0 );
 		}
 		else if( prop instanceof GravityRadiusProperty )
 		{

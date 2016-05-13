@@ -14,6 +14,7 @@ import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.AnimationController;
 import com.badlogic.gdx.graphics.g3d.utils.CameraInputController;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.mygdx.game_asteroid_3d.TexturesCache.Texture_Types;
@@ -39,6 +40,7 @@ public class GameShipDraw2D implements IDraw, IPropertyChangeListener
 //	private float mRotationAngle = 0.0f;
 	
 	private Sprite mShipSprite;
+	private Matrix4 mTranformation = new Matrix4();
 	
 	public GameShipDraw2D( float x, float y )
 	{
@@ -51,8 +53,10 @@ public class GameShipDraw2D implements IDraw, IPropertyChangeListener
 		mShipSprite.setScale( 0.25f );
 //		mShipeSprite.setOrigin( 0, 0 );
 		mShipSprite.setOriginCenter();
-		mShipSprite.setPosition( x - mShipSprite.getWidth() / 2, y - mShipSprite.getHeight() / 2 );
+		mShipSprite.setPosition( x + Gdx.graphics.getWidth() / 2 - mShipSprite.getWidth() / 2, y + Gdx.graphics.getHeight() / 2 - mShipSprite.getHeight() / 2 );
 		
+		mTranformation.setToOrtho2D( 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight() );
+		mTranformation.translate( 0, 0, 0 );
 //		mTextureWidth = (int)( mShipTexture.getWidth() * 0.5f );
 //		mTextureHeight = (int)( mShipTexture.getHeight() * 0.5f );
 	}
@@ -61,7 +65,7 @@ public class GameShipDraw2D implements IDraw, IPropertyChangeListener
 	public void draw(Batch batch, float deltaTime)
 	{
 //		animationController.update(Gdx.graphics.getDeltaTime());
-
+		mBatch.setProjectionMatrix( mTranformation );
 		mBatch.begin();
 //			mBatch.draw( mShipTexture, mFinalPosition.x, mFinalPosition.y, - mTextureWidth / 2, - mTextureHeight / 2,
 //					(float)mTextureWidth, (float)mTextureHeight, 0.5f, 0.5f, mRotationAngle, 0, 0, (int)( mShipTexture.getWidth() ), (int)( mShipTexture.getHeight() ), false, false);
@@ -91,18 +95,23 @@ public class GameShipDraw2D implements IDraw, IPropertyChangeListener
 	@Override
 	public void onChanged( IProperty prop )
 	{
-		if( prop instanceof PositionProperty )
+//		if( prop instanceof PositionProperty )
+//		{
+//			Vector2 position = ((PositionProperty)prop).getPosition();
+//			
+//			deltaPartial( mFinalPosition, position, mTmpVector, 1.0f );
+//
+////			mModelInstance.transform.trn( mTmpVector.x, mTmpVector.y, 0.0f );
+//		
+////			mIntermitentPosition.set( mFinalPosition );
+//			mFinalPosition.set( position.x + Gdx.graphics.getWidth() / 2, position.y + Gdx.graphics.getHeight() / 2 );
+//			mShipSprite.setPosition( mFinalPosition.x - mShipSprite.getWidth() / 2, mFinalPosition.y - mShipSprite.getHeight() / 2 );
+//		}
+		if( prop instanceof MoveProperty )
 		{
-			Vector2 position = ((PositionProperty)prop).getPosition();
-			
-			deltaPartial( mFinalPosition, position, mTmpVector, 1.0f );
-
-//			mModelInstance.transform.trn( mTmpVector.x, mTmpVector.y, 0.0f );
-		
-//			mIntermitentPosition.set( mFinalPosition );
-			mFinalPosition.set( position.x + Gdx.graphics.getWidth() / 2, position.y + Gdx.graphics.getHeight() / 2 );
-			mShipSprite.setPosition( mFinalPosition.x - mShipSprite.getWidth() / 2, mFinalPosition.y - mShipSprite.getHeight() / 2 );
-		}
+			Vector2 delta = ((MoveProperty)prop).getDelta();
+//			mTranformation.translate( Gdx.graphics.getWidth() / 2, Gdx.graphics.getHeight(), 0 );
+		}		
 		else if( prop instanceof LinearVelocityProperty )
 		{
 			Vector2 linearVelocity = ((LinearVelocityProperty)prop).getLinearVelocity();			

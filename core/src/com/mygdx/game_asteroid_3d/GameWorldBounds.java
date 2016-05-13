@@ -171,19 +171,19 @@ public class GameWorldBounds implements IPropertyChangeListener, Disposable
 //				mInitialMoved = true;
 //			}
 //		}
-		if( prop instanceof MoveProperty )
-		{
-			if( true == mInitialMoved )
-			{
-				Vector2 delta = ((MoveProperty)prop).getDelta();
-				mPosition.add( -delta.x / 2, delta.y );
-//				move( mPosition.x, -mPosition.y );
-			}
-			else
-			{
-				mInitialMoved = true;
-			}
-		}
+//		if( prop instanceof MoveProperty )
+//		{
+//			if( true == mInitialMoved )
+//			{
+//				Vector2 delta = ((MoveProperty)prop).getDelta();
+//				mPosition.add( -delta.x / 2, delta.y );
+////				move( mPosition.x, -mPosition.y );
+//			}
+//			else
+//			{
+//				mInitialMoved = true;
+//			}
+//		}
 	}
 
 	@Override

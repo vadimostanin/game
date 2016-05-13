@@ -54,9 +54,9 @@ public class GamePlayScreen extends Actor implements InputProcessor, IPropertyCh
 
 	private float physicsTimeLeft;
 
-	private Camera mCamera;
+	private OrthographicCamera mCamera;
 	private Matrix4 mTranformation = new Matrix4();
-	private SpriteBatch mBallSprite;
+	private SpriteBatch mBatch;
 	private int mViewPortWidth = 0;
 	private int mViewPortHeight = 0;
 	private int mViewPortX = 0;
@@ -107,18 +107,21 @@ public class GamePlayScreen extends Actor implements InputProcessor, IPropertyCh
 		mCamera.lookAt( 0, 0, 0);
 		mCamera.near = 1f;
 		mCamera.far = 2000f;
+		mCamera.setToOrtho( false );
 		mCamera.update();
 		
-		mTranformation.set( mCamera.combined );
+//		mTranformation.set( mCamera.combined );
+		mTranformation.setToOrtho2D( -mViewPortWidth/2, -mViewPortHeight/2, mViewPortWidth, mViewPortHeight );
 
-		mBallSprite = new SpriteBatch();
+		mBatch = new SpriteBatch();
 		mCameraInput = new CameraInputController( mCamera );
 		
 		mInputProcessor = globalInputProcessor;
 		mInputProcessor.addProcessor( this );
 //		mInputProcessor.addProcessor( mCameraInput );
-		
+		new Thread( GameShipPropertyPublisherTask.getInstance() ).start();		
 		show();
+
 	}
 	
 	private void constructWallShape()
@@ -281,8 +284,8 @@ public class GamePlayScreen extends Actor implements InputProcessor, IPropertyCh
 		listeners.add( playerDraw );
 		listeners.add( this );
 		
-		BodyWrapperTask bodyWrapperTask = new BodyWrapperTask( mShipBody.getBody(), listeners );
-		new Thread( bodyWrapperTask ).start();
+		GameShipPropertyPublisherTask.getInstance().setShipBody( mShipBody.getBody() );
+		GameShipPropertyPublisherTask.getInstance().addListeners( listeners );
 	}
 
 	private void createGravityBodies()
@@ -326,8 +329,10 @@ public class GamePlayScreen extends Actor implements InputProcessor, IPropertyCh
 			listeners.add( gravBody );
 			listeners.add( gravDraw );
 			
-			BodyWrapperTask bodyWrapperTask = new BodyWrapperTask( boxBody, listeners );
-			new Thread( bodyWrapperTask ).start();
+			GameShipPropertyPublisherTask.getInstance().addListeners( listeners );
+			
+//			BodyWrapperTask bodyWrapperTask = new BodyWrapperTask( boxBody, listeners );
+//			new Thread( bodyWrapperTask ).start();
 		}
 		ballShape.dispose();
 	}
@@ -378,7 +383,7 @@ public class GamePlayScreen extends Actor implements InputProcessor, IPropertyCh
 			{
 				for( IDraw drawObj : mDrawingBodies )
 				{
-					drawObj.draw(mBallSprite, deltaTime);
+					drawObj.draw( mBatch, deltaTime );
 				}
 			}
 			catch( Exception e )
@@ -414,10 +419,11 @@ public class GamePlayScreen extends Actor implements InputProcessor, IPropertyCh
 		
         Gdx.gl.glViewport( 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight() );
 		
-		
 		mCamera.update();
 		fixedStep(Gdx.graphics.getDeltaTime());
 
+//		mBatch.setTransformMatrix( mTranformation );
+		mBatch.setProjectionMatrix( mCamera.combined );
 		renderObjects(delta);
 //		mTranformation.translate( -0.05f, 0.0f, 0.0f );
 		mDebugRenderer.render(mGameWorld.getWorld(), mTranformation);
@@ -621,18 +627,27 @@ public class GamePlayScreen extends Actor implements InputProcessor, IPropertyCh
 	}
 
 	@Override
-	public boolean scrolled(int amount) {
-		mCamera.rotate((float) amount * 3f, 0, 0, 1);
+	public boolean scrolled(int amount)
+	{
+//		mCamera.rotate((float) amount * 3f, 0, 0, 1);
 		return false;
 	}
 
+	private boolean mInitialMove = false;
 	@Override
 	public void onChanged(IProperty prop)
 	{
 		if( prop instanceof MoveProperty )
 		{
-			Vector2 delta = ((MoveProperty)prop).getDelta();
-			mTranformation.translate( delta.x, delta.y, 0 );
+			if( true == mInitialMove )
+			{
+				Vector2 delta = ((MoveProperty)prop).getDelta();
+				mTranformation.translate( -delta.x, -delta.y, 0 );
+			}
+			else
+			{
+				mInitialMove = true;
+			}
 		}
 		mListeners.onChanged( prop );
 	}
